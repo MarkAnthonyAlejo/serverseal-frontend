@@ -2,7 +2,7 @@
 export type ShipmentStatus = 'Pending' | 'Sealed' | 'In Transit' | 'Delivered'
 
 export interface Shipment {
-    id: string,
+    shipment_id: string,
     bol_number: string, 
     origin: string, 
     destination: string, 
