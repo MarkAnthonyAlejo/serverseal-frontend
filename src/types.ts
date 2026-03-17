@@ -17,5 +17,4 @@ export interface ShipmentEvent {
     location: string, 
     notes: string, 
     evidence_photos?: string[]
-
 }
