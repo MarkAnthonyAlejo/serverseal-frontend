@@ -5,8 +5,23 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ServerSeal // OPS</title>
+
+    <script
+     src="https://maps.googleapis.com/maps/api/js?key=%VITE_GOOGLE_MAPS_API_KEY%&libraries=places"
+      async
+      defer
+    ></script>
+
+    <style>
+      /* Prevents white flash on load before React kicks in */
+      body {
+        margin: 0;
+        background-color: #0a0a0a; /* Matches your bg-base color */
+      }
+    </style>
   </head>
-  <body class="bg-base"> <div id="root"></div>
+  <body class="bg-base">
+    <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

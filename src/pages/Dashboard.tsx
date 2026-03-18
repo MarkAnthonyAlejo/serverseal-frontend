@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react'
 import type { Shipment } from '../types'; 
+import NewShipmentDrawer from '../components/NewShipmentDrawer'; // Import the drawer
 
 export default function Dashboard() {
   const [shipments, setShipments] = useState<Shipment[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  useEffect(() => {
+  // 1. Move fetch into a reusable function
+  const fetchShipments = () => {
     fetch('http://localhost:5050/api/shipments')
       .then(res => {
         if(!res.ok) throw new Error('ERR_FETCH_FAILED');
@@ -13,11 +16,15 @@ export default function Dashboard() {
       })
       .then(data => setShipments(data))
       .catch(err => setError(err.message));
+  };
+
+  // 2. Initial load
+  useEffect(() => {
+    fetchShipments();
   }, []);
 
   return (
     <div className="p-8 flex flex-col gap-10">
-      {/* Dashboard Header */}
       <header className="flex justify-between items-end border-b border-subtle pb-6">
         <div>
           <h1 className="font-display text-7xl text-accent-primary tracking-tighter leading-none">
@@ -27,19 +34,22 @@ export default function Dashboard() {
             TERMINAL_ACTIVE // UNIT_SD_01 // <span className="text-status-ok">ONLINE</span>
           </p>
         </div>
-        <button className="btn-industrial">
+        
+        {/* 3. Link the button to open the drawer */}
+        <button 
+          onClick={() => setIsDrawerOpen(true)}
+          className="btn-industrial"
+        >
           NEW_SHIPMENT
         </button>
       </header>
 
-      {/* Error Alert */}
       {error && (
         <div className="border border-status-danger bg-status-danger/10 p-4 font-mono text-status-danger text-sm">
           [!] CRITICAL_DATA_FETCH_FAILURE: {error}
         </div>
       )}
 
-      {/* Shipment Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {shipments.map(s => (
           <div key={s.shipment_id} className="bg-surface border border-subtle p-6 hover:border-accent-primary/40 transition-colors group">
@@ -69,6 +79,13 @@ export default function Dashboard() {
           </div>
         ))}
       </div>
+
+      {/* 4. Add the Drawer component here */}
+      <NewShipmentDrawer 
+        isOpen={isDrawerOpen} 
+        onClose={() => setIsDrawerOpen(false)} 
+        onSuccess={fetchShipments} // Pass the refresh function
+      />
     </div>
   );
 }
