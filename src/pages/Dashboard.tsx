@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react'
 import type { Shipment } from '../types'; 
-import NewShipmentDrawer from '../components/NewShipmentDrawer'; // Import the drawer
+import NewShipmentDrawer from '../components/NewShipmentDrawer';
+import Toast from '../components/Toast'; // Import the new Toast component
 
 export default function Dashboard() {
   const [shipments, setShipments] = useState<Shipment[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  // 1. Move fetch into a reusable function
+  // --- TOAST STATE ---
+  const [toast, setToast] = useState({ isVisible: false, message: '' });
+
   const fetchShipments = () => {
     fetch('http://localhost:5050/api/shipments')
       .then(res => {
@@ -18,16 +21,34 @@ export default function Dashboard() {
       .catch(err => setError(err.message));
   };
 
-  // 2. Initial load
+  // --- NEW: SUCCESS HANDLER ---
+  const handleShipmentSuccess = (bol: string) => {
+    // 1. Refresh the table data
+    fetchShipments();
+    
+    // 2. Trigger the toast notification
+    setToast({ 
+      isVisible: true, 
+      message: `SHIPMENT_COMMITTED // ${bol}` 
+    });
+  };
+
   useEffect(() => {
     fetchShipments();
   }, []);
 
   return (
     <div className="p-8 flex flex-col gap-10">
+      {/* 1. Add the Toast Component at the top level */}
+      <Toast 
+        isVisible={toast.isVisible} 
+        message={toast.message} 
+        onClose={() => setToast({ ...toast, isVisible: false })} 
+      />
+
       <header className="flex justify-between items-end border-b border-subtle pb-6">
         <div>
-          <h1 className="font-display text-7xl text-accent-primary tracking-tighter leading-none">
+          <h1 className="font-display text-7xl text-accent-primary tracking-tighter leading-none uppercase">
             SERVERSEAL // OPS_DASHBOARD
           </h1>
           <p className="font-mono text-xs text-text-muted mt-2 tracking-[0.2em]">
@@ -35,7 +56,6 @@ export default function Dashboard() {
           </p>
         </div>
         
-        {/* 3. Link the button to open the drawer */}
         <button 
           onClick={() => setIsDrawerOpen(true)}
           className="btn-industrial"
@@ -52,7 +72,10 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {shipments.map(s => (
-          <div key={s.shipment_id} className="bg-surface border border-subtle p-6 hover:border-accent-primary/40 transition-colors group">
+          <div key={s.shipment_id} className="bg-surface border border-subtle p-6 hover:border-accent-primary/40 transition-colors group relative overflow-hidden">
+            {/* Subtle Industrial Scanline Effect on hover */}
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent-primary/5 to-transparent -translate-y-full group-hover:translate-y-full transition-transform duration-1000 pointer-events-none" />
+            
             <div className="flex justify-between items-start mb-6">
               <span className="font-mono text-[10px] text-text-muted uppercase tracking-widest">
                 ID: {s.shipment_id.slice(0, 8)}
@@ -69,22 +92,22 @@ export default function Dashboard() {
             <div className="grid grid-cols-2 gap-4 border-t border-subtle pt-4">
               <div>
                 <p className="font-mono text-[9px] text-text-muted uppercase">Origin</p>
-                <p className="font-sans text-sm text-text-primary">{s.origin}</p>
+                <p className="font-sans text-sm text-text-primary truncate" title={s.origin}>{s.origin}</p>
               </div>
               <div>
                 <p className="font-mono text-[9px] text-text-muted uppercase">Destination</p>
-                <p className="font-sans text-sm text-text-primary">{s.destination}</p>
+                <p className="font-sans text-sm text-text-primary truncate" title={s.destination}>{s.destination}</p>
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* 4. Add the Drawer component here */}
       <NewShipmentDrawer 
         isOpen={isDrawerOpen} 
         onClose={() => setIsDrawerOpen(false)} 
-        onSuccess={fetchShipments} // Pass the refresh function
+        // 2. Update this to use our new handler
+        onSuccess={(bol) => handleShipmentSuccess(bol)} 
       />
     </div>
   );

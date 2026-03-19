@@ -29,5 +29,11 @@ export interface ShipmentEvent {
 export interface DrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (bol: string) => void;
+}
+
+export interface ToastProps {
+  message: string;
+  isVisible: boolean;
+  onClose: () => void;
 }
