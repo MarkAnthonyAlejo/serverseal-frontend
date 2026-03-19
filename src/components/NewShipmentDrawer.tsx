@@ -35,6 +35,13 @@ export default function NewShipmentDrawer({ isOpen, onClose, onSuccess }: Drawer
     debounce: 300,
   });
 
+  // --- LOGIC GATE: VALIDATION ---
+  // The button only unlocks if BOL has length and both cities are selected
+  const isFormValid = 
+    formData.bol_number.trim().length >= 3 && 
+    formData.origin.length > 0 && 
+    formData.destination.length > 0;
+
   const handleSelectOrigin = (description: string) => {
     setOriginValue(description, false);
     setFormData(prev => ({ ...prev, origin: description }));
@@ -49,6 +56,8 @@ export default function NewShipmentDrawer({ isOpen, onClose, onSuccess }: Drawer
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isFormValid) return; // Extra safety check
+
     setIsSubmitting(true);
 
     try {
@@ -59,11 +68,11 @@ export default function NewShipmentDrawer({ isOpen, onClose, onSuccess }: Drawer
       });
 
       if (res.ok) {
-        // SUCCESS: Pass the BOL number back to the Dashboard for the Toast
+        // Success: Trigger the Toast in the Dashboard
         onSuccess(formData.bol_number); 
         onClose();
         
-        // Reset States
+        // Reset local states
         setFormData({ bol_number: '', origin: '', destination: '' });
         setOriginValue('');
         setDestValue('');
@@ -98,7 +107,7 @@ export default function NewShipmentDrawer({ isOpen, onClose, onSuccess }: Drawer
               <input 
                 required
                 autoComplete="off"
-                className="w-full bg-base border border-subtle p-3 font-mono text-sm text-text-primary focus:border-accent-primary outline-none transition-all"
+                className="w-full bg-base border border-subtle p-3 font-mono text-sm text-text-primary focus:border-accent-primary outline-none transition-all placeholder:opacity-30"
                 value={formData.bol_number}
                 onChange={e => setFormData({...formData, bol_number: e.target.value})}
                 placeholder="e.g. SEA-9920"
@@ -113,14 +122,16 @@ export default function NewShipmentDrawer({ isOpen, onClose, onSuccess }: Drawer
                 disabled={!originReady}
                 onChange={(e) => {
                   setOriginValue(e.target.value);
-                  setFormData(prev => ({ ...prev, origin: e.target.value }));
+                  // We clear the form data if they start typing again 
+                  // to force them to click a new suggestion
+                  setFormData(prev => ({ ...prev, origin: '' }));
                 }}
-                className="w-full bg-base border border-subtle p-3 font-mono text-sm text-text-primary focus:border-accent-primary outline-none"
+                className="w-full bg-base border border-subtle p-3 font-mono text-sm text-text-primary focus:border-accent-primary outline-none placeholder:opacity-30"
                 placeholder={originReady ? "SEARCH_CITY..." : "SYSTEM_INITIALIZING..."}
                 required
               />
               {originStatus === "OK" && (
-                <ul className="absolute z-[60] w-full bg-surface border border-accent-primary mt-1 shadow-2xl max-h-60 overflow-y-auto">
+                <ul className="absolute z-[60] w-full bg-surface border border-accent-primary mt-1 shadow-2xl max-h-60 overflow-y-auto custom-scrollbar">
                   {originData.map(({ place_id, description }) => (
                     <li 
                       key={place_id} 
@@ -142,14 +153,14 @@ export default function NewShipmentDrawer({ isOpen, onClose, onSuccess }: Drawer
                 disabled={!destReady}
                 onChange={(e) => {
                   setDestValue(e.target.value);
-                  setFormData(prev => ({ ...prev, destination: e.target.value }));
+                  setFormData(prev => ({ ...prev, destination: '' }));
                 }}
-                className="w-full bg-base border border-subtle p-3 font-mono text-sm text-text-primary focus:border-accent-primary outline-none"
+                className="w-full bg-base border border-subtle p-3 font-mono text-sm text-text-primary focus:border-accent-primary outline-none placeholder:opacity-30"
                 placeholder={destReady ? "SEARCH_CITY..." : "SYSTEM_INITIALIZING..."}
                 required
               />
               {destStatus === "OK" && (
-                <ul className="absolute z-[60] w-full bg-surface border border-accent-primary mt-1 shadow-2xl max-h-60 overflow-y-auto">
+                <ul className="absolute z-[60] w-full bg-surface border border-accent-primary mt-1 shadow-2xl max-h-60 overflow-y-auto custom-scrollbar">
                   {destData.map(({ place_id, description }) => (
                     <li 
                       key={place_id} 
@@ -167,8 +178,12 @@ export default function NewShipmentDrawer({ isOpen, onClose, onSuccess }: Drawer
             <div className="pt-6">
               <button 
                 type="submit" 
-                disabled={isSubmitting}
-                className={`btn-industrial w-full py-4 flex items-center justify-center gap-2 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={!isFormValid || isSubmitting}
+                className={`btn-industrial w-full py-4 flex items-center justify-center gap-2 transition-all duration-300
+                  ${(!isFormValid || isSubmitting) 
+                    ? 'opacity-20 cursor-not-allowed grayscale scale-[0.98]' 
+                    : 'opacity-100 cursor-pointer active:scale-[0.97] shadow-[0_0_15px_rgba(var(--color-accent-primary-rgb),0.3)]'
+                  }`}
               >
                 {isSubmitting ? (
                   <span className="animate-pulse">PROCESSING_DATA...</span>
@@ -176,6 +191,13 @@ export default function NewShipmentDrawer({ isOpen, onClose, onSuccess }: Drawer
                   'COMMIT_DATA'
                 )}
               </button>
+              
+              {/* Optional: Tiny hint for the user */}
+              {!isFormValid && (
+                <p className="text-center font-mono text-[8px] text-text-muted mt-3 tracking-tighter uppercase opacity-50">
+                  Waiting for verified city selection...
+                </p>
+              )}
             </div>
           </form>
         </div>
