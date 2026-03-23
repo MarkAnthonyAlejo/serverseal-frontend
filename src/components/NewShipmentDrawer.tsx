@@ -61,7 +61,7 @@ export default function NewShipmentDrawer({ isOpen, onClose, onSuccess }: Drawer
     setIsSubmitting(true);
 
     try {
-      const res = await fetch('http://localhost:5050/api/shipments', {
+      const res = await fetch('/api/shipments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
