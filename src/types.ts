@@ -7,6 +7,7 @@ export interface Shipment {
     destination: string;
     status: ShipmentStatus;
     created_at?: string;
+    updated_at?: string;
     event_count?: number;
     last_event_type?: string;
     last_event_at?: string;
