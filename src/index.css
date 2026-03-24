@@ -68,3 +68,8 @@
     filter: brightness(1.1);
   }
 }
+
+@keyframes scanline {
+  0%   { top: 0%; }
+  100% { top: 100%; }
+}
