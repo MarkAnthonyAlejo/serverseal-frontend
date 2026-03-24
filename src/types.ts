@@ -40,9 +40,17 @@ export interface ShipmentEvent {
     evidence_photos?: MediaItem[];
 }
 
+export interface StatusHistoryEntry {
+    history_id: string;
+    shipment_id: string;
+    status: ShipmentStatus;
+    changed_at: string;
+}
+
 export interface ShipmentDetail {
     shipment: Shipment;
     history: ShipmentEvent[];
+    status_history: StatusHistoryEntry[];
 }
 
 // Rename this for clarity

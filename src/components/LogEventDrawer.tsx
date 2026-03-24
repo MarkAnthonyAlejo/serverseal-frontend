@@ -27,6 +27,7 @@ export default function LogEventDrawer({ isOpen, onClose, onSuccess, shipmentId 
     notes: '',
   });
   const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +40,14 @@ export default function LogEventDrawer({ isOpen, onClose, onSuccess, shipmentId 
     setValue: setLocationValue,
     clearSuggestions: clearLocationSuggestions,
   } = usePlacesAutocomplete({ debounce: 300 });
+
+  // Create / revoke the object URL whenever the selected file changes
+  useEffect(() => {
+    if (!file) { setPreviewUrl(null); return; }
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
 
   // Request geolocation when drawer opens
   useEffect(() => {
@@ -131,13 +140,18 @@ export default function LogEventDrawer({ isOpen, onClose, onSuccess, shipmentId 
     }
   };
 
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
   const inputClass = "w-full bg-base border border-subtle p-3 font-mono text-sm text-text-primary focus:border-accent-primary outline-none transition-all placeholder:opacity-30";
   const labelClass = "block font-mono text-[10px] text-accent-primary uppercase mb-2 tracking-widest";
 
   return (
     <>
       {isOpen && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-40" onClick={onClose} />
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-40" onClick={handleClose} />
       )}
 
       <div className={`fixed top-0 right-0 h-full w-[420px] bg-surface border-l border-subtle z-50 transform transition-transform duration-500 shadow-2xl overflow-y-auto ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
@@ -250,6 +264,25 @@ export default function LogEventDrawer({ isOpen, onClose, onSuccess, shipmentId 
                 onChange={e => setFile(e.target.files?.[0] ?? null)}
                 className="w-full font-mono text-xs text-text-muted file:mr-4 file:py-2 file:px-4 file:border file:border-subtle file:bg-base file:text-text-primary file:font-mono file:text-xs file:cursor-pointer hover:file:border-accent-primary"
               />
+              {previewUrl && (
+                <div className="relative mt-2">
+                  <img
+                    src={previewUrl}
+                    alt="Preview"
+                    className="w-full h-40 object-cover border border-accent-primary/40"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => { setFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
+                    className="absolute top-1 right-1 bg-base border border-subtle font-mono text-[9px] text-text-muted px-2 py-1 hover:border-status-danger hover:text-status-danger transition-colors"
+                  >
+                    REMOVE
+                  </button>
+                  <p className="font-mono text-[9px] text-status-ok mt-1">
+                    ◉ MEDIA_ATTACHED: {file?.name}
+                  </p>
+                </div>
+              )}
               {coords && (
                 <p className="font-mono text-[9px] text-status-ok mt-1">
                   ◉ GEO_LOCK: {coords.lat.toFixed(4)}, {coords.lon.toFixed(4)}

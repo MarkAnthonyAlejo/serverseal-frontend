@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import type { ShipmentDetail as ShipmentDetailType } from '../types';
+import type { ShipmentDetail as ShipmentDetailType, ShipmentStatus, StatusHistoryEntry } from '../types';
 import { getStatusClasses, getStatusLabel } from '../utils/statusUtils';
+
+const STATUS_ORDER: ShipmentStatus[] = ['Pending', 'Sealed', 'In Transit', 'Delivered'];
 import EventCard from '../components/EventCard';
 import LogEventDrawer from '../components/LogEventDrawer';
 import StatusControl from '../components/StatusControl';
@@ -51,7 +53,17 @@ export default function ShipmentDetail() {
 
   const handleStatusChange = (newStatus: ShipmentDetailType['shipment']['status']) => {
     if (data) {
-      setData({ ...data, shipment: { ...data.shipment, status: newStatus } });
+      const newEntry: StatusHistoryEntry = {
+        history_id: crypto.randomUUID(),
+        shipment_id: data.shipment.shipment_id,
+        status: newStatus,
+        changed_at: new Date().toISOString(),
+      };
+      setData({
+        ...data,
+        shipment: { ...data.shipment, status: newStatus },
+        status_history: [...data.status_history, newEntry],
+      });
     }
   };
 
@@ -80,7 +92,7 @@ export default function ShipmentDetail() {
     );
   }
 
-  const { shipment, history } = data;
+  const { shipment, history, status_history } = data;
 
   return (
     <div className="p-8 flex flex-col gap-10">
@@ -125,6 +137,48 @@ export default function ShipmentDetail() {
         <p className="font-mono text-[10px] text-text-muted mt-3 tracking-widest">
           INITIATED: {formatTimestamp(shipment.created_at)}
         </p>
+
+        {/* Status timeline */}
+        <div className="mt-8">
+          <p className="font-mono text-[9px] text-text-muted tracking-widest uppercase mb-4">STATUS_TIMELINE</p>
+          <div className="grid grid-cols-4 relative">
+            {/* Base line */}
+            <div className="absolute top-[5px] left-[12.5%] right-[12.5%] h-px bg-subtle" />
+            {/* Progress line */}
+            <div
+              className="absolute top-[5px] left-[12.5%] h-px bg-accent-primary transition-all duration-500"
+              style={{ width: `${STATUS_ORDER.indexOf(shipment.status) * 25}%` }}
+            />
+            {STATUS_ORDER.map((s, i) => {
+              const entry = status_history.find(e => e.status === s);
+              const statusIndex = STATUS_ORDER.indexOf(shipment.status);
+              const isReached = i <= statusIndex;
+              const isCurrent = i === statusIndex;
+              return (
+                <div key={s} className="flex flex-col items-center relative z-10">
+                  <div className={`w-2.5 h-2.5 border-2 ${
+                    isCurrent ? 'bg-accent-primary border-accent-primary' :
+                    isReached ? 'bg-accent-primary/20 border-accent-primary' :
+                    'bg-base border-subtle'
+                  }`} />
+                  <span className={`font-mono text-[8px] mt-2 uppercase tracking-wider text-center leading-tight ${
+                    isCurrent ? 'text-accent-primary' :
+                    isReached ? 'text-text-muted' :
+                    'text-text-muted/25'
+                  }`}>
+                    {getStatusLabel(s)}
+                  </span>
+                  <span className="font-mono text-[8px] text-text-muted/60 mt-0.5 text-center">
+                    {entry ? new Date(entry.changed_at).toLocaleString('en-US', {
+                      month: 'short', day: 'numeric',
+                      hour: 'numeric', minute: '2-digit',
+                    }) : '—'}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </header>
 
       {/* Status control */}
@@ -149,13 +203,22 @@ export default function ShipmentDetail() {
         </div>
 
         {history.length === 0 ? (
-          <div className="border border-subtle p-12 text-center">
+          <div className="border border-subtle p-12 flex flex-col items-center gap-4 text-center">
+            <p className="font-mono text-[9px] text-text-muted tracking-widest uppercase">
+              CHAIN_OF_CUSTODY_EMPTY
+            </p>
             <p className="font-display text-3xl text-text-muted tracking-widest">
-              NO_EVENTS_LOGGED // CHAIN_OF_CUSTODY_EMPTY
+              NO_EVENTS_LOGGED
             </p>
-            <p className="font-mono text-xs text-text-muted mt-3">
-              Log the first custody event to begin the audit trail.
+            <p className="font-mono text-xs text-text-muted">
+              Log the first event to begin the chain-of-custody audit trail.
             </p>
+            <button
+              onClick={() => setIsDrawerOpen(true)}
+              className="btn-industrial px-6 py-2 mt-2"
+            >
+              LOG_FIRST_EVENT
+            </button>
           </div>
         ) : (
           <div className="relative">
