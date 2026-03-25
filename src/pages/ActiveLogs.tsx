@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Shipment } from '../types';
+import { apiFetch } from '../api';
 
 // Formats a timestamp like "2025-03-24T14:30:00" into "MAR 24, 2025 14:30"
 function formatTimestamp(ts: string | undefined): string {
@@ -23,7 +24,7 @@ export default function ActiveLogs() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/shipments/active')
+    apiFetch('/api/shipments/active')
       .then(res => {
         if (!res.ok) throw new Error('ERR_FETCH_FAILED');
         return res.json();

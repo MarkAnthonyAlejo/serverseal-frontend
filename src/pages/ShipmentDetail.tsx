@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { apiFetch } from '../api';
+import { useAuth } from '../context/AuthContext';
 import type { ShipmentDetail as ShipmentDetailType, ShipmentStatus, StatusHistoryEntry } from '../types';
 import { getStatusClasses, getStatusLabel } from '../utils/statusUtils';
 
@@ -21,6 +23,8 @@ function formatTimestamp(ts?: string): string {
 export default function ShipmentDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isClient = user?.role === 'Client';
 
   const [data, setData] = useState<ShipmentDetailType | null>(null);
   const [loading, setLoading] = useState(true);
@@ -29,7 +33,7 @@ export default function ShipmentDetail() {
   const [toast, setToast] = useState({ isVisible: false, message: '' });
 
   const fetchData = () => {
-    fetch(`/api/shipments/${id}`)
+    apiFetch(`/api/shipments/${id}`)
       .then(res => {
         if (res.status === 404) { setNotFound(true); return null; }
         if (!res.ok) throw new Error('ERR_FETCH_FAILED');
@@ -182,11 +186,13 @@ export default function ShipmentDetail() {
       </header>
 
       {/* Status control */}
-      <StatusControl
-        shipmentId={shipment.shipment_id}
-        currentStatus={shipment.status}
-        onStatusChange={handleStatusChange}
-      />
+      {!isClient && (
+        <StatusControl
+          shipmentId={shipment.shipment_id}
+          currentStatus={shipment.status}
+          onStatusChange={handleStatusChange}
+        />
+      )}
 
       {/* Event timeline */}
       <section>
@@ -194,12 +200,14 @@ export default function ShipmentDetail() {
           <h2 className="font-display text-4xl text-text-primary tracking-tight">
             CHAIN_OF_CUSTODY // EVENT_LOG
           </h2>
-          <button
-            onClick={() => setIsDrawerOpen(true)}
-            className="btn-industrial text-base px-6 py-2"
-          >
-            LOG_NEW_EVENT
-          </button>
+          {!isClient && (
+            <button
+              onClick={() => setIsDrawerOpen(true)}
+              className="btn-industrial text-base px-6 py-2"
+            >
+              LOG_NEW_EVENT
+            </button>
+          )}
         </div>
 
         {history.length === 0 ? (
@@ -213,12 +221,14 @@ export default function ShipmentDetail() {
             <p className="font-mono text-xs text-text-muted">
               Log the first event to begin the chain-of-custody audit trail.
             </p>
-            <button
-              onClick={() => setIsDrawerOpen(true)}
-              className="btn-industrial px-6 py-2 mt-2"
-            >
-              LOG_FIRST_EVENT
-            </button>
+            {!isClient && (
+              <button
+                onClick={() => setIsDrawerOpen(true)}
+                className="btn-industrial px-6 py-2 mt-2"
+              >
+                LOG_FIRST_EVENT
+              </button>
+            )}
           </div>
         ) : (
           <div className="relative">

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Html5Qrcode } from 'html5-qrcode';
+import { apiFetch } from '../api';
 
 type ScanStatus = 'idle' | 'scanning' | 'found' | 'error' | 'searching';
 
@@ -39,7 +40,7 @@ export default function ScanCargo() {
     setStatusMessage(`QUERYING_BOL: ${bol}...`);
 
     try {
-      const res = await fetch(`/api/shipments/bol/${encodeURIComponent(bol.trim())}`);
+      const res = await apiFetch(`/api/shipments/bol/${encodeURIComponent(bol.trim())}`);
       if (res.ok) {
         const data = await res.json();
         setScanStatus('found');

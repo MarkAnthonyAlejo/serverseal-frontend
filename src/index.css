@@ -67,6 +67,11 @@
   .btn-industrial:hover {
     filter: brightness(1.1);
   }
+
+  .btn-industrial-danger:hover {
+    background-color: var(--color-status-danger);
+    filter: none;
+  }
 }
 
 @keyframes scanline {

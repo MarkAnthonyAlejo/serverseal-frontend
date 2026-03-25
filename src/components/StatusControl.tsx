@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { ShipmentStatus } from '../types';
 import { getStatusClasses, getStatusLabel } from '../utils/statusUtils';
+import { apiFetch } from '../api';
 
 interface StatusControlProps {
   shipmentId: string;
@@ -31,7 +32,7 @@ export default function StatusControl({ shipmentId, currentStatus, onStatusChang
     if (!pending) return;
     setIsUpdating(true);
     try {
-      const res = await fetch(`/api/shipments/${shipmentId}/status`, {
+      const res = await apiFetch(`/api/shipments/${shipmentId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: pending }),

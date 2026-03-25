@@ -4,6 +4,8 @@ import type { Shipment, ShipmentStatus } from '../types';
 import { getStatusClasses, getStatusLabel } from '../utils/statusUtils';
 import NewShipmentDrawer from '../components/NewShipmentDrawer';
 import Toast from '../components/Toast';
+import { apiFetch } from '../api';
+import { useAuth } from '../context/AuthContext';
 
 // SortKey is a UI-only type — it only applies to the dashboard's sort dropdown,
 // not to any API data shape, so it lives here rather than in types.ts.
@@ -27,6 +29,8 @@ const STATUS_FILTERS: { label: string; value: ShipmentStatus | 'ALL' }[] = [
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isClient = user?.role === 'Client';
 
   // useSearchParams keeps filters in the URL so they survive navigation and can be bookmarked.
   // e.g. /?q=BOL-001&status=In+Transit&sort=updated
@@ -53,7 +57,7 @@ export default function Dashboard() {
   };
 
   const fetchShipments = () => {
-    fetch('/api/shipments')
+    apiFetch('/api/shipments')
       .then(res => {
         if (!res.ok) throw new Error('ERR_FETCH_FAILED');
         return res.json();
@@ -138,9 +142,11 @@ export default function Dashboard() {
             TERMINAL_ACTIVE // UNIT_SD_01 // <span className="text-status-ok">ONLINE</span>
           </p>
         </div>
-        <button onClick={() => setIsDrawerOpen(true)} className="btn-industrial">
-          NEW_SHIPMENT
-        </button>
+        {!isClient && (
+          <button onClick={() => setIsDrawerOpen(true)} className="btn-industrial">
+            NEW_SHIPMENT
+          </button>
+        )}
       </header>
 
       {error && (
@@ -233,9 +239,11 @@ export default function Dashboard() {
           <p className="font-display text-4xl text-text-muted tracking-widest">
             NO_ACTIVE_MANIFESTS // SYSTEM_IDLE
           </p>
-          <button onClick={() => setIsDrawerOpen(true)} className="btn-industrial">
-            NEW_SHIPMENT
-          </button>
+          {!isClient && (
+            <button onClick={() => setIsDrawerOpen(true)} className="btn-industrial">
+              NEW_SHIPMENT
+            </button>
+          )}
         </div>
       )}
 

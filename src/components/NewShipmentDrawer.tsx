@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import usePlacesAutocomplete from "use-places-autocomplete";
 import type { DrawerProps } from '../types';
+import { apiFetch } from '../api';
 
 export default function NewShipmentDrawer({ isOpen, onClose, onSuccess }: DrawerProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -61,7 +62,7 @@ export default function NewShipmentDrawer({ isOpen, onClose, onSuccess }: Drawer
     setIsSubmitting(true);
 
     try {
-      const res = await fetch('/api/shipments', {
+      const res = await apiFetch('/api/shipments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),

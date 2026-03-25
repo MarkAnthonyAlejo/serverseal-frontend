@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import usePlacesAutocomplete from 'use-places-autocomplete';
+import { apiFetch } from '../api';
 
 interface LogEventDrawerProps {
   isOpen: boolean;
@@ -13,7 +14,6 @@ const EVENT_TYPES = ['Pickup', 'Transit Check', 'Transfer', 'Delivery', 'Excepti
 interface FormData {
   event_type: string;
   location: string;
-  handler_id: string;
   hardware_details: string;
   notes: string;
 }
@@ -22,7 +22,6 @@ export default function LogEventDrawer({ isOpen, onClose, onSuccess, shipmentId 
   const [formData, setFormData] = useState<FormData>({
     event_type: '',
     location: '',
-    handler_id: localStorage.getItem('serverseal_handler_id') ?? '',
     hardware_details: '',
     notes: '',
   });
@@ -61,8 +60,7 @@ export default function LogEventDrawer({ isOpen, onClose, onSuccess, shipmentId 
 
   const isFormValid =
     formData.event_type.length > 0 &&
-    formData.location.trim().length > 0 &&
-    formData.handler_id.trim().length > 0;
+    formData.location.trim().length > 0;
 
   const handleSelectLocation = (description: string) => {
     setLocationValue(description, false);
@@ -75,13 +73,7 @@ export default function LogEventDrawer({ isOpen, onClose, onSuccess, shipmentId 
   };
 
   const resetForm = () => {
-    setFormData({
-      event_type: '',
-      location: '',
-      handler_id: localStorage.getItem('serverseal_handler_id') ?? '',
-      hardware_details: '',
-      notes: '',
-    });
+    setFormData({ event_type: '', location: '', hardware_details: '', notes: '' });
     setLocationValue('');
     setFile(null);
     setError(null);
@@ -95,8 +87,8 @@ export default function LogEventDrawer({ isOpen, onClose, onSuccess, shipmentId 
     setError(null);
 
     try {
-      // Step 1: Create the event
-      const eventRes = await fetch('/api/events', {
+      // Step 1: Create the event — handler_id is set server-side from the JWT
+      const eventRes = await apiFetch('/api/events', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -105,7 +97,6 @@ export default function LogEventDrawer({ isOpen, onClose, onSuccess, shipmentId 
           location: formData.location,
           hardware_details: formData.hardware_details || null,
           notes: formData.notes || null,
-          handler_id: formData.handler_id,
         }),
       });
 
@@ -127,7 +118,7 @@ export default function LogEventDrawer({ isOpen, onClose, onSuccess, shipmentId 
           form.append('longitude', String(coords.lon));
         }
 
-        await fetch('/api/media/upload', { method: 'POST', body: form });
+        await apiFetch('/api/media/upload', { method: 'POST', body: form });
       }
 
       onSuccess();
@@ -213,19 +204,6 @@ export default function LogEventDrawer({ isOpen, onClose, onSuccess, shipmentId 
                   ))}
                 </ul>
               )}
-            </div>
-
-            {/* HANDLER_ID */}
-            <div>
-              <label className={labelClass}>HANDLER_ID</label>
-              <input
-                name="handler_id"
-                value={formData.handler_id}
-                onChange={handleChange}
-                className={inputClass}
-                placeholder="Badge number or name"
-                required
-              />
             </div>
 
             {/* HARDWARE_DETAILS */}
