@@ -4,12 +4,22 @@ import { apiFetch } from '../api';
 import { useAuth } from '../context/AuthContext';
 import type { ShipmentDetail as ShipmentDetailType, ShipmentStatus, StatusHistoryEntry } from '../types';
 import { getStatusClasses, getStatusLabel } from '../utils/statusUtils';
-
-const STATUS_ORDER: ShipmentStatus[] = ['Pending', 'Sealed', 'In Transit', 'Delivered'];
 import EventCard from '../components/EventCard';
 import LogEventDrawer from '../components/LogEventDrawer';
 import StatusControl from '../components/StatusControl';
+import QAInspectionPanel from '../components/QAInspectionPanel';
 import Toast from '../components/Toast';
+
+// The 4 main milestones shown in the status timeline.
+// QA statuses all map to the Pending step — details are shown in QAInspectionPanel.
+const TIMELINE_STEPS: ShipmentStatus[] = ['Pending', 'Sealed', 'In Transit', 'Delivered'];
+
+const QA_STATUSES: ShipmentStatus[] = ['Pending Inspection', 'Under Inspection', 'QA Hold', 'QA Approved'];
+
+function getTimelineIndex(status: ShipmentStatus): number {
+  if (QA_STATUSES.includes(status)) return 0;
+  return TIMELINE_STEPS.indexOf(status);
+}
 
 function formatTimestamp(ts?: string): string {
   if (!ts) return '—';
@@ -24,7 +34,8 @@ export default function ShipmentDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const isClient = user?.role === 'Client';
+  const isClient      = user?.role === 'Client';
+  const isQAInspector = user?.role === 'QA Inspector';
 
   const [data, setData] = useState<ShipmentDetailType | null>(null);
   const [loading, setLoading] = useState(true);
@@ -151,11 +162,11 @@ export default function ShipmentDetail() {
             {/* Progress line */}
             <div
               className="absolute top-[5px] left-[12.5%] h-px bg-accent-primary transition-all duration-500"
-              style={{ width: `${STATUS_ORDER.indexOf(shipment.status) * 25}%` }}
+              style={{ width: `${getTimelineIndex(shipment.status) * 25}%` }}
             />
-            {STATUS_ORDER.map((s, i) => {
+            {TIMELINE_STEPS.map((s: ShipmentStatus, i: number) => {
               const entry = status_history.find(e => e.status === s);
-              const statusIndex = STATUS_ORDER.indexOf(shipment.status);
+              const statusIndex = getTimelineIndex(shipment.status);
               const isReached = i <= statusIndex;
               const isCurrent = i === statusIndex;
               return (
@@ -185,11 +196,19 @@ export default function ShipmentDetail() {
         </div>
       </header>
 
-      {/* Status control */}
-      {!isClient && (
+      {/* QA Inspection Panel — shown to all roles when relevant */}
+      <QAInspectionPanel
+        shipmentId={shipment.shipment_id}
+        shipmentStatus={shipment.status}
+        onStatusChange={handleStatusChange}
+      />
+
+      {/* Status control — hidden from Client and QA Inspector */}
+      {!isClient && !isQAInspector && (
         <StatusControl
           shipmentId={shipment.shipment_id}
           currentStatus={shipment.status}
+          userRole={user?.role ?? ''}
           onStatusChange={handleStatusChange}
         />
       )}

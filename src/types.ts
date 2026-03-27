@@ -1,4 +1,12 @@
-export type ShipmentStatus = 'Pending' | 'Sealed' | 'In Transit' | 'Delivered';
+export type ShipmentStatus =
+  | 'Pending'
+  | 'Pending Inspection'
+  | 'Under Inspection'
+  | 'QA Hold'
+  | 'QA Approved'
+  | 'Sealed'
+  | 'In Transit'
+  | 'Delivered';
 
 export interface Shipment {
     shipment_id: string;
@@ -6,6 +14,7 @@ export interface Shipment {
     origin: string;
     destination: string;
     status: ShipmentStatus;
+    assigned_qa_id?: string | null;
     created_at?: string;
     updated_at?: string;
     event_count?: number;
@@ -13,7 +22,6 @@ export interface Shipment {
     last_event_at?: string;
 }
 
-// Data needed for the POST request
 export interface ShipmentCreateInput {
     bol_number: string;
     origin: string;
@@ -53,7 +61,6 @@ export interface ShipmentDetail {
     status_history: StatusHistoryEntry[];
 }
 
-// Rename this for clarity
 export interface DrawerProps {
   isOpen: boolean;
   onClose: () => void;
@@ -64,4 +71,43 @@ export interface ToastProps {
   message: string;
   isVisible: boolean;
   onClose: () => void;
+}
+
+// --- QA Types ---
+
+export interface QAUser {
+    user_id: string;
+    email: string;
+}
+
+export type QAInspectionStatus = 'Pending' | 'In Progress' | 'Passed' | 'Failed' | 'On Hold';
+export type QADisposition = 'Pass' | 'Fail' | 'QA Hold' | 'Conditional';
+export type ItemDisposition = 'Pass' | 'Fail' | 'Use-as-is' | 'Return to Vendor' | 'Scrap';
+
+export interface QAChecklistItem {
+    item_id: string;
+    inspection_id: string;
+    manufacturer: string | null;
+    model: string | null;
+    serial_number: string | null;
+    quantity: number;
+    visual_condition: 'Pass' | 'Fail' | null;
+    packaging_condition: 'Pass' | 'Fail' | null;
+    damage_notes: string | null;
+    disposition: ItemDisposition | null;
+    created_at: string;
+}
+
+export interface QAInspection {
+    inspection_id: string;
+    shipment_id: string;
+    assigned_qa_id: string;
+    assigned_qa_email: string;
+    status: QAInspectionStatus;
+    overall_disposition: QADisposition | null;
+    notes: string | null;
+    created_by: string;
+    created_at: string;
+    completed_at: string | null;
+    items: QAChecklistItem[];
 }

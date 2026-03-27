@@ -32,7 +32,7 @@ export default function Settings() {
   const [usersLoading, setUsersLoading] = useState(false);
   const [newEmail, setNewEmail]         = useState('');
   const [newPassword, setNewPassword]   = useState('');
-  const [newRole, setNewRole]           = useState<'Driver' | 'Client'>('Driver');
+  const [newRole, setNewRole]           = useState<'Driver' | 'Client' | 'QA Inspector'>('Driver');
   const [createError, setCreateError]   = useState<string | null>(null);
   const [isCreating, setIsCreating]     = useState(false);
 
@@ -171,8 +171,9 @@ export default function Settings() {
                 >
                   <span className="font-mono text-xs text-text-primary truncate">{u.email}</span>
                   <span className={`font-mono text-[10px] border px-2 py-0.5 w-fit ${
-                    u.role === 'Admin'  ? 'border-accent-primary text-accent-primary' :
-                    u.role === 'Driver' ? 'border-status-warn text-status-warn' :
+                    u.role === 'Admin'        ? 'border-accent-primary text-accent-primary' :
+                    u.role === 'Driver'       ? 'border-status-warn text-status-warn' :
+                    u.role === 'QA Inspector' ? 'border-status-ok text-status-ok' :
                     'border-subtle text-text-muted'
                   }`}>
                     {u.role.toUpperCase()}
@@ -231,11 +232,12 @@ export default function Settings() {
                 <label className={labelClass}>ROLE</label>
                 <select
                   value={newRole}
-                  onChange={e => setNewRole(e.target.value as 'Driver' | 'Client')}
+                  onChange={e => setNewRole(e.target.value as 'Driver' | 'Client' | 'QA Inspector')}
                   className={inputClass}
                 >
                   <option value="Driver">DRIVER</option>
                   <option value="Client">CLIENT</option>
+                  <option value="QA Inspector">QA INSPECTOR</option>
                 </select>
               </div>
               <button

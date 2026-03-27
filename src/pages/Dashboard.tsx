@@ -12,11 +12,16 @@ import { useAuth } from '../context/AuthContext';
 type SortKey = 'newest' | 'oldest' | 'updated' | 'status';
 
 // Status order for sort-by-status: active work surfaces first
+// Sort order: lower = higher urgency (surfaces most action-needed shipments first)
 const STATUS_ORDER: Record<ShipmentStatus, number> = {
-  'In Transit': 0,
-  'Sealed':     1,
-  'Pending':    2,
-  'Delivered':  3,
+  'QA Hold':            0,
+  'Under Inspection':   1,
+  'In Transit':         2,
+  'Pending Inspection': 3,
+  'QA Approved':        4,
+  'Sealed':             5,
+  'Pending':            6,
+  'Delivered':          7,
 };
 
 const STATUS_FILTERS: { label: string; value: ShipmentStatus | 'ALL' }[] = [
@@ -277,9 +282,16 @@ export default function Dashboard() {
               <span className="font-mono text-[10px] text-text-muted uppercase tracking-widest">
                 ID: {s.shipment_id.slice(0, 8)}
               </span>
-              <span className={`font-mono text-[10px] border px-2 py-0.5 bg-opacity-5 ${getStatusClasses(s.status)}`}>
-                {getStatusLabel(s.status)}
-              </span>
+              <div className="flex items-center gap-2">
+                {s.status === 'QA Hold' && (
+                  <span className="font-mono text-[9px] bg-status-danger/10 border border-status-danger text-status-danger px-2 py-0.5 animate-pulse">
+                    [!] QA_HOLD
+                  </span>
+                )}
+                <span className={`font-mono text-[10px] border px-2 py-0.5 bg-opacity-5 ${getStatusClasses(s.status)}`}>
+                  {getStatusLabel(s.status)}
+                </span>
+              </div>
             </div>
 
             <h2 className="font-display text-4xl text-text-primary mb-4 tracking-tight">

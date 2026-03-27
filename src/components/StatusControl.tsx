@@ -6,27 +6,59 @@ import { apiFetch } from '../api';
 interface StatusControlProps {
   shipmentId: string;
   currentStatus: ShipmentStatus;
+  userRole: string;
   onStatusChange: (newStatus: ShipmentStatus) => void;
 }
 
-const TRANSITIONS: Record<ShipmentStatus, ShipmentStatus[]> = {
-  'Pending':    ['Sealed'],
-  'Sealed':     ['In Transit'],
-  'In Transit': ['Delivered', 'Pending'],
-  'Delivered':  [],
+// Admin can resolve QA Hold and advance through QA Approved → Sealed → In Transit → Delivered
+const ADMIN_TRANSITIONS: Record<ShipmentStatus, ShipmentStatus[]> = {
+  'Pending':            [],
+  'Pending Inspection': [],
+  'Under Inspection':   [],
+  'QA Hold':            ['QA Approved', 'Under Inspection'],
+  'QA Approved':        ['Sealed'],
+  'Sealed':             ['In Transit'],
+  'In Transit':         ['Delivered', 'Pending'],
+  'Delivered':          [],
+};
+
+// Driver can only advance once QA is cleared
+const DRIVER_TRANSITIONS: Record<ShipmentStatus, ShipmentStatus[]> = {
+  'Pending':            [],
+  'Pending Inspection': [],
+  'Under Inspection':   [],
+  'QA Hold':            [],
+  'QA Approved':        ['Sealed'],
+  'Sealed':             ['In Transit'],
+  'In Transit':         ['Delivered', 'Pending'],
+  'Delivered':          [],
 };
 
 const NEXT_STATUS_STYLE: Record<ShipmentStatus, string> = {
-  'Pending':    'border-text-muted text-text-muted hover:bg-text-muted hover:text-base',
-  'Sealed':     'border-accent-primary text-accent-primary hover:bg-accent-primary hover:text-base',
-  'In Transit': 'border-status-warn text-status-warn hover:bg-status-warn hover:text-base',
-  'Delivered':  'border-status-ok text-status-ok hover:bg-status-ok hover:text-base',
+  'Pending':            'border-text-muted text-text-muted hover:bg-text-muted hover:text-base',
+  'Pending Inspection': 'border-status-warn text-status-warn hover:bg-status-warn hover:text-base',
+  'Under Inspection':   'border-status-warn text-status-warn hover:bg-status-warn hover:text-base',
+  'QA Hold':            'border-status-danger text-status-danger hover:bg-status-danger hover:text-base',
+  'QA Approved':        'border-status-ok text-status-ok hover:bg-status-ok hover:text-base',
+  'Sealed':             'border-accent-primary text-accent-primary hover:bg-accent-primary hover:text-base',
+  'In Transit':         'border-status-warn text-status-warn hover:bg-status-warn hover:text-base',
+  'Delivered':          'border-status-ok text-status-ok hover:bg-status-ok hover:text-base',
 };
 
-export default function StatusControl({ shipmentId, currentStatus, onStatusChange }: StatusControlProps) {
+// Contextual messages for statuses with no manual transitions
+const STATUS_MESSAGES: Partial<Record<ShipmentStatus, string>> = {
+  'Pending':            'ASSIGN_QA_INSPECTOR // USE_QA_PANEL_BELOW',
+  'Pending Inspection': 'AWAITING_QA_START // INSPECTOR_NOTIFIED',
+  'Under Inspection':   'INSPECTION_IN_PROGRESS // AWAITING_QA_SUBMISSION',
+  'Delivered':          'SHIPMENT_CLOSED // NO_FURTHER_TRANSITIONS',
+};
+
+export default function StatusControl({ shipmentId, currentStatus, userRole, onStatusChange }: StatusControlProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [pending, setPending] = useState<ShipmentStatus | null>(null);
-  const nextStates = TRANSITIONS[currentStatus];
+
+  const transitions = userRole === 'Admin' ? ADMIN_TRANSITIONS : DRIVER_TRANSITIONS;
+  const nextStates = transitions[currentStatus] ?? [];
 
   const handleTransition = async () => {
     if (!pending) return;
@@ -60,9 +92,9 @@ export default function StatusControl({ shipmentId, currentStatus, onStatusChang
             </h3>
             <p className="font-mono text-sm text-text-muted mb-6">
               This will transition the shipment from{' '}
-              <span className={`${getStatusClasses(currentStatus)}`}>{getStatusLabel(currentStatus)}</span>
+              <span className={getStatusClasses(currentStatus)}>{getStatusLabel(currentStatus)}</span>
               {' '}→{' '}
-              <span className={`${getStatusClasses(pending)}`}>{getStatusLabel(pending)}</span>.
+              <span className={getStatusClasses(pending)}>{getStatusLabel(pending)}</span>.
               {' '}This action will be recorded in the audit trail.
             </p>
             <div className="flex gap-3">
@@ -110,7 +142,7 @@ export default function StatusControl({ shipmentId, currentStatus, onStatusChang
           </div>
         ) : (
           <p className="font-mono text-[10px] text-text-muted tracking-widest uppercase">
-            SHIPMENT_CLOSED // NO_FURTHER_TRANSITIONS
+            {STATUS_MESSAGES[currentStatus] ?? 'SHIPMENT_CLOSED // NO_FURTHER_TRANSITIONS'}
           </p>
         )}
       </div>
