@@ -41,7 +41,27 @@ export default function ShipmentDetail() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [toast, setToast] = useState({ isVisible: false, message: '' });
+
+  const handleDownloadReport = async () => {
+    setIsDownloading(true);
+    try {
+      const res = await apiFetch(`/api/shipments/${id}/report`);
+      if (!res.ok) throw new Error('REPORT_GENERATION_FAILED');
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = `serverseal_report_${id?.slice(0, 8)}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setToast({ isVisible: true, message: '[!] REPORT_GENERATION_FAILED' });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const fetchData = () => {
     apiFetch(`/api/shipments/${id}`)
@@ -136,9 +156,18 @@ export default function ShipmentDetail() {
               {shipment.bol_number}
             </h1>
           </div>
-          <span className={`font-mono text-xs border px-3 py-1 mt-2 ${getStatusClasses(shipment.status)}`}>
-            {getStatusLabel(shipment.status)}
-          </span>
+          <div className="flex items-center gap-3 mt-2">
+            <span className={`font-mono text-xs border px-3 py-1 ${getStatusClasses(shipment.status)}`}>
+              {getStatusLabel(shipment.status)}
+            </span>
+            <button
+              onClick={handleDownloadReport}
+              disabled={isDownloading}
+              className="font-mono text-[10px] tracking-widest border border-subtle text-text-muted px-4 py-2 hover:border-accent-primary hover:text-accent-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed uppercase"
+            >
+              {isDownloading ? <span className="animate-pulse">GENERATING...</span> : 'DOWNLOAD_REPORT'}
+            </button>
+          </div>
         </div>
 
         <p className="font-mono text-lg text-text-primary mt-4">
