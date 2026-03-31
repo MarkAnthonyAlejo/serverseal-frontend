@@ -42,6 +42,7 @@ export default function ShipmentDetail() {
   const [notFound, setNotFound] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [toast, setToast] = useState({ isVisible: false, message: '' });
 
   const handleDownloadReport = async () => {
@@ -79,6 +80,10 @@ export default function ShipmentDetail() {
 
   useEffect(() => {
     fetchData();
+    apiFetch(`/api/shipments/${id}/qr`)
+      .then(res => res.ok ? res.blob() : null)
+      .then(blob => { if (blob) setQrDataUrl(URL.createObjectURL(blob)); })
+      .catch(() => {});
   }, [id]);
 
   const handleEventSuccess = () => {
@@ -156,17 +161,33 @@ export default function ShipmentDetail() {
               {shipment.bol_number}
             </h1>
           </div>
-          <div className="flex items-center gap-3 mt-2">
-            <span className={`font-mono text-xs border px-3 py-1 ${getStatusClasses(shipment.status)}`}>
-              {getStatusLabel(shipment.status)}
-            </span>
-            <button
-              onClick={handleDownloadReport}
-              disabled={isDownloading}
-              className="font-mono text-[10px] tracking-widest border border-subtle text-text-muted px-4 py-2 hover:border-accent-primary hover:text-accent-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed uppercase"
-            >
-              {isDownloading ? <span className="animate-pulse">GENERATING...</span> : 'DOWNLOAD_REPORT'}
-            </button>
+          <div className="flex items-start gap-6 mt-2">
+            <div className="flex items-center gap-3">
+              <span className={`font-mono text-xs border px-3 py-1 ${getStatusClasses(shipment.status)}`}>
+                {getStatusLabel(shipment.status)}
+              </span>
+              <button
+                onClick={handleDownloadReport}
+                disabled={isDownloading}
+                className="font-mono text-[10px] tracking-widest border border-subtle text-text-muted px-4 py-2 hover:border-accent-primary hover:text-accent-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed uppercase"
+              >
+                {isDownloading ? <span className="animate-pulse">GENERATING...</span> : 'DOWNLOAD_REPORT'}
+              </button>
+            </div>
+            {qrDataUrl && (
+              <div className="flex flex-col items-center gap-1">
+                <div className="border border-subtle p-1 bg-white">
+                  <img src={qrDataUrl} alt="Shipment QR Code" className="w-16 h-16 block" />
+                </div>
+                <a
+                  href={qrDataUrl}
+                  download={`serverseal_qr_${id?.slice(0, 8)}.png`}
+                  className="font-mono text-[9px] text-text-muted hover:text-accent-primary transition-colors tracking-widest uppercase"
+                >
+                  SAVE_QR
+                </a>
+              </div>
+            )}
           </div>
         </div>
 
