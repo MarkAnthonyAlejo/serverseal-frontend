@@ -16,7 +16,9 @@ function formatTimestamp(ts?: string): string {
 }
 
 export default function EventCard({ event, index }: EventCardProps) {
-  const photos = event.evidence_photos ?? [];
+  const allMedia = event.evidence_photos ?? [];
+  const signatures = allMedia.filter(m => m.type === 'signature');
+  const photos = allMedia.filter(m => m.type !== 'signature');
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   useEffect(() => {
@@ -81,6 +83,27 @@ export default function EventCard({ event, index }: EventCardProps) {
             <pre className="bg-base border border-subtle p-3 font-mono text-xs text-text-primary overflow-x-auto whitespace-pre-wrap">
               {event.hardware_details}
             </pre>
+          </div>
+        )}
+
+        {/* Delivery signature */}
+        {signatures.length > 0 && (
+          <div className="mb-4">
+            <p className="font-mono text-[9px] text-text-muted uppercase mb-2 tracking-widest">
+              DELIVERY_SIGNATURE
+            </p>
+            {signatures.map(sig => {
+              const url = `/uploads/${sig.path.replace(/^uploads\//, '')}`;
+              return (
+                <div key={sig.media_id} className="border border-accent-primary/40 inline-block">
+                  <img
+                    src={url}
+                    alt="Delivery signature"
+                    className="h-20 w-auto object-contain"
+                  />
+                </div>
+              );
+            })}
           </div>
         )}
 
@@ -176,9 +199,9 @@ export default function EventCard({ event, index }: EventCardProps) {
               </div>
             )}
           </div>
-        ) : (
+        ) : signatures.length === 0 ? (
           <p className="font-mono text-[10px] text-text-muted">[NO_MEDIA_ATTACHED]</p>
-        )}
+        ) : null}
       </div>
     </div>
   );

@@ -32,6 +32,10 @@ export default function LogEventDrawer({ isOpen, onClose, onSuccess, shipmentId 
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Signature state
+  const signatureCanvasRef = useRef<HTMLCanvasElement>(null);
+  const [hasSignature, setHasSignature] = useState(false);
+
   const {
     ready: locationReady,
     value: locationValue,
@@ -58,9 +62,116 @@ export default function LogEventDrawer({ isOpen, onClose, onSuccess, shipmentId 
     }
   }, [isOpen]);
 
+  // Set up canvas drawing when Delivery is selected
+  useEffect(() => {
+    if (formData.event_type !== 'Delivery') return;
+
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+
+    // Size the canvas to its displayed dimensions
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width > 0) {
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+    }
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.strokeStyle = '#00ff88';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    let drawing = false;
+
+    const getPos = (e: MouseEvent | TouchEvent) => {
+      const r = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / r.width;
+      const scaleY = canvas.height / r.height;
+      const point = e instanceof TouchEvent ? e.touches[0] : e;
+      return {
+        x: (point.clientX - r.left) * scaleX,
+        y: (point.clientY - r.top) * scaleY,
+      };
+    };
+
+    const start = (e: MouseEvent | TouchEvent) => {
+      e.preventDefault();
+      drawing = true;
+      const pos = getPos(e);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+    };
+
+    const draw = (e: MouseEvent | TouchEvent) => {
+      if (!drawing) return;
+      e.preventDefault();
+      const pos = getPos(e);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+      setHasSignature(true);
+    };
+
+    const stop = () => { drawing = false; };
+
+    canvas.addEventListener('mousedown', start);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stop);
+    canvas.addEventListener('mouseleave', stop);
+    canvas.addEventListener('touchstart', start, { passive: false });
+    canvas.addEventListener('touchmove', draw, { passive: false });
+    canvas.addEventListener('touchend', stop);
+
+    return () => {
+      canvas.removeEventListener('mousedown', start);
+      canvas.removeEventListener('mousemove', draw);
+      canvas.removeEventListener('mouseup', stop);
+      canvas.removeEventListener('mouseleave', stop);
+      canvas.removeEventListener('touchstart', start);
+      canvas.removeEventListener('touchmove', draw);
+      canvas.removeEventListener('touchend', stop);
+    };
+  }, [formData.event_type]);
+
+  const clearSignature = () => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setHasSignature(false);
+  };
+
+  const getSignatureFile = (): Promise<File | null> => {
+    return new Promise((resolve) => {
+      const canvas = signatureCanvasRef.current;
+      if (!canvas || !hasSignature) { resolve(null); return; }
+
+      // Export with white background so it renders clearly in PDFs
+      const exportCanvas = document.createElement('canvas');
+      exportCanvas.width = canvas.width;
+      exportCanvas.height = canvas.height;
+      const ctx = exportCanvas.getContext('2d');
+      if (!ctx) { resolve(null); return; }
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+      ctx.drawImage(canvas, 0, 0);
+
+      exportCanvas.toBlob((blob) => {
+        if (!blob) { resolve(null); return; }
+        resolve(new File([blob], `sig_${Date.now()}.png`, { type: 'image/png' }));
+      }, 'image/png');
+    });
+  };
+
+  const isDelivery = formData.event_type === 'Delivery';
+
   const isFormValid =
     formData.event_type.length > 0 &&
-    formData.location.trim().length > 0;
+    formData.location.trim().length > 0 &&
+    (!isDelivery || hasSignature);
 
   const handleSelectLocation = (description: string) => {
     setLocationValue(description, false);
@@ -77,10 +188,12 @@ export default function LogEventDrawer({ isOpen, onClose, onSuccess, shipmentId 
     setLocationValue('');
     setFile(null);
     setError(null);
+    clearSignature();
+    setHasSignature(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!isFormValid) return;
     setIsSubmitting(true);
@@ -107,7 +220,7 @@ export default function LogEventDrawer({ isOpen, onClose, onSuccess, shipmentId 
 
       const { event_id } = await eventRes.json();
 
-      // Step 2: Upload media if a file was selected
+      // Step 2: Upload photo evidence if attached
       if (file) {
         const form = new FormData();
         form.append('file', file);
@@ -117,8 +230,23 @@ export default function LogEventDrawer({ isOpen, onClose, onSuccess, shipmentId 
           form.append('latitude', String(coords.lat));
           form.append('longitude', String(coords.lon));
         }
-
         await apiFetch('/api/media/upload', { method: 'POST', body: form });
+      }
+
+      // Step 3: Upload signature for Delivery events
+      if (isDelivery) {
+        const sigFile = await getSignatureFile();
+        if (sigFile) {
+          const sigForm = new FormData();
+          sigForm.append('file', sigFile);
+          sigForm.append('event_id', event_id);
+          sigForm.append('media_type', 'signature');
+          if (coords) {
+            sigForm.append('latitude', String(coords.lat));
+            sigForm.append('longitude', String(coords.lon));
+          }
+          await apiFetch('/api/media/upload', { method: 'POST', body: sigForm });
+        }
       }
 
       onSuccess();
@@ -267,6 +395,49 @@ export default function LogEventDrawer({ isOpen, onClose, onSuccess, shipmentId 
                 </p>
               )}
             </div>
+
+            {/* RECIPIENT SIGNATURE — Delivery events only */}
+            {isDelivery && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className={labelClass + ' mb-0'}>
+                    RECIPIENT_SIGNATURE <span className="text-status-danger">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={clearSignature}
+                    className="font-mono text-[9px] text-text-muted border border-subtle px-2 py-1 hover:border-status-danger hover:text-status-danger transition-colors"
+                  >
+                    CLEAR
+                  </button>
+                </div>
+                <div className="relative border border-subtle bg-base">
+                  <canvas
+                    ref={signatureCanvasRef}
+                    className="w-full h-36 cursor-crosshair touch-none block"
+                    style={{ display: 'block' }}
+                  />
+                  {!hasSignature && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <span className="font-mono text-[10px] text-text-muted opacity-40 tracking-widest">
+                        SIGN HERE
+                      </span>
+                    </div>
+                  )}
+                  {/* signing line */}
+                  <div className="absolute bottom-6 left-6 right-6 border-b border-subtle pointer-events-none" />
+                </div>
+                {hasSignature ? (
+                  <p className="font-mono text-[9px] text-status-ok mt-1">
+                    ◉ SIGNATURE_CAPTURED
+                  </p>
+                ) : (
+                  <p className="font-mono text-[9px] text-status-danger mt-1">
+                    [!] SIGNATURE_REQUIRED FOR DELIVERY
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* SUBMIT */}
             <div className="pt-4">
