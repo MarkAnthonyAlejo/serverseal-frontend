@@ -1,10 +1,12 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/NotificationContext';
 
 const navItems = [
   { name: 'DASHBOARD',   path: '/' },
   { name: 'ACTIVE_LOGS', path: '/logs' },
   { name: 'SCAN_CARGO',  path: '/scan' },
+  { name: 'ALERTS',      path: '/alerts' },
   { name: 'SETTINGS',    path: '/settings' },
 ];
 
@@ -12,6 +14,7 @@ export default function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { unreadCount } = useNotifications();
 
   const handleLogout = () => {
     logout();
@@ -32,17 +35,23 @@ export default function Sidebar() {
       <nav className="flex-1">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
+          const showBadge = item.path === '/alerts' && unreadCount > 0;
           return (
             <Link
               key={item.path}
               to={item.path}
-              className={`flex items-center px-8 py-4 font-mono text-xs tracking-[0.2em] transition-all group
+              className={`flex items-center justify-between px-8 py-4 font-mono text-xs tracking-[0.2em] transition-all group
                 ${isActive
                   ? 'border-l-4 border-accent-primary bg-accent-primary/5 text-text-primary'
                   : 'text-text-muted hover:text-text-primary hover:bg-white/5'
                 }`}
             >
-              {isActive ? `> ${item.name}` : item.name}
+              <span>{isActive ? `> ${item.name}` : item.name}</span>
+              {showBadge && (
+                <span className="font-mono text-[9px] bg-accent-primary text-base px-1.5 py-0.5 rounded-sm min-w-[18px] text-center leading-none">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </Link>
           );
         })}

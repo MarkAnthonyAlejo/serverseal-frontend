@@ -98,6 +98,33 @@ export interface QAChecklistItem {
     created_at: string;
 }
 
+// --- Notification Types ---
+
+export type NotificationType =
+  | 'qa_assigned'
+  | 'inspection_started'
+  | 'qa_verdict'
+  | 'hold_resolved'
+  | 'status_changed';
+
+export interface Notification {
+  notification_id: string;
+  shipment_id: string | null;
+  bol_number: string | null;
+  type: NotificationType;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+}
+
+export interface NotificationContextType {
+  notifications: Notification[];
+  unreadCount: number;
+  markRead: (id: string) => Promise<void>;
+  markAllRead: () => Promise<void>;
+  refresh: () => void;
+}
+
 export interface QAInspection {
     inspection_id: string;
     shipment_id: string;

@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { NotificationProvider } from './context/NotificationContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
@@ -7,6 +8,7 @@ import ShipmentDetail from './pages/ShipmentDetail';
 import ActiveLogs from './pages/ActiveLogs';
 import ScanCargo from './pages/ScanCargo';
 import Settings from './pages/Settings';
+import Alerts from './pages/Alerts';
 import Login from './pages/Login';
 import NotFound from './pages/NotFound';
 import './index.css';
@@ -23,6 +25,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <AuthProvider>
+      <NotificationProvider>
       <Router>
         <Routes>
           {/* Public route — no sidebar */}
@@ -69,9 +72,18 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/alerts"
+            element={
+              <ProtectedRoute>
+                <AppShell><Alerts /></AppShell>
+              </ProtectedRoute>
+            }
+          />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
+      </NotificationProvider>
     </AuthProvider>
   );
 }
