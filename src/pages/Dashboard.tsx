@@ -131,16 +131,16 @@ export default function Dashboard() {
   const clearAllFilters = () => setSearchParams({}, { replace: true });
 
   return (
-    <div className="p-8 flex flex-col gap-8">
+    <div className="p-4 md:p-8 flex flex-col gap-6 md:gap-8">
       <Toast
         isVisible={toast.isVisible}
         message={toast.message}
         onClose={() => setToast({ ...toast, isVisible: false })}
       />
 
-      <header className="flex justify-between items-end border-b border-subtle pb-6">
+      <header className="flex flex-col gap-4 md:flex-row md:justify-between md:items-end border-b border-subtle pb-6">
         <div>
-          <h1 className="font-display text-7xl text-accent-primary tracking-tighter leading-none uppercase">
+          <h1 className="font-display text-5xl md:text-7xl text-accent-primary tracking-tighter leading-none uppercase">
             SERVERSEAL // OPS_DASHBOARD
           </h1>
           <p className="font-mono text-xs text-text-muted mt-2 tracking-[0.2em]">
@@ -148,7 +148,7 @@ export default function Dashboard() {
           </p>
         </div>
         {!isClient && (
-          <button onClick={() => setIsDrawerOpen(true)} className="btn-industrial">
+          <button onClick={() => setIsDrawerOpen(true)} className="btn-industrial self-start md:self-auto">
             NEW_SHIPMENT
           </button>
         )}

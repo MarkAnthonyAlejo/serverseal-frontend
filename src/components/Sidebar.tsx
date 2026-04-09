@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
@@ -10,11 +11,14 @@ const navItems = [
   { name: 'SETTINGS',    path: '/settings' },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { unreadCount } = useNotifications();
+
+  // Close sidebar when route changes (handles nav link taps on mobile)
+  useEffect(() => { onClose(); }, [location.pathname]);
 
   const handleLogout = () => {
     logout();
@@ -22,7 +26,12 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="w-64 bg-surface border-r border-subtle flex flex-col h-screen sticky top-0">
+    <aside className={`
+      w-64 bg-surface border-r border-subtle flex flex-col h-screen
+      fixed inset-y-0 left-0 z-40 transition-transform duration-300
+      md:sticky md:top-0 md:z-auto md:shrink-0 md:translate-x-0
+      ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+    `}>
       <div className="p-8 mb-4">
         <div className="text-accent-primary font-display text-3xl tracking-tighter">
           SERVERSEAL_SYS

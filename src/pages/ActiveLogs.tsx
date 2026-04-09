@@ -40,18 +40,18 @@ export default function ActiveLogs() {
   }, []);
 
   return (
-    <div className="p-8 flex flex-col gap-10">
+    <div className="p-4 md:p-8 flex flex-col gap-6 md:gap-10">
 
       <header className="flex justify-between items-end border-b border-subtle pb-6">
         <div>
-          <h1 className="font-display text-7xl text-accent-primary tracking-tighter leading-none uppercase">
+          <h1 className="font-display text-5xl md:text-7xl text-accent-primary tracking-tighter leading-none uppercase">
             ACTIVE_LOGS // IN_TRANSIT
           </h1>
           <p className="font-mono text-xs text-text-muted mt-2 tracking-[0.2em]">
             LIVE_MONITOR // TRACKING_ACTIVE_MANIFESTS // <span className="text-status-warn">IN_TRANSIT</span>
           </p>
         </div>
-        <div className="font-mono text-[10px] text-text-muted border border-subtle px-3 py-2">
+        <div className="font-mono text-[10px] text-text-muted border border-subtle px-3 py-2 shrink-0">
           <span className="text-status-warn">{shipments.length}</span> ACTIVE
         </div>
       </header>
@@ -85,12 +85,12 @@ export default function ActiveLogs() {
         <div className="flex flex-col gap-0 border border-subtle">
 
           {/* Table Header */}
-          <div className="grid grid-cols-[1fr_1.2fr_1.2fr_1fr_1fr] gap-4 px-6 py-3 bg-surface border-b border-subtle">
+          <div className="grid grid-cols-[1fr_auto] md:grid-cols-[1fr_1.2fr_1.2fr_1fr_1fr] gap-4 px-4 md:px-6 py-3 bg-surface border-b border-subtle">
             <span className="font-mono text-[9px] text-text-muted uppercase tracking-widest">BOL_NUMBER</span>
-            <span className="font-mono text-[9px] text-text-muted uppercase tracking-widest">ORIGIN</span>
-            <span className="font-mono text-[9px] text-text-muted uppercase tracking-widest">DESTINATION</span>
-            <span className="font-mono text-[9px] text-text-muted uppercase tracking-widest">LAST_EVENT</span>
-            <span className="font-mono text-[9px] text-text-muted uppercase tracking-widest">LAST_UPDATED</span>
+            <span className="hidden md:block font-mono text-[9px] text-text-muted uppercase tracking-widest">ORIGIN</span>
+            <span className="hidden md:block font-mono text-[9px] text-text-muted uppercase tracking-widest">DESTINATION</span>
+            <span className="hidden md:block font-mono text-[9px] text-text-muted uppercase tracking-widest">LAST_EVENT</span>
+            <span className="font-mono text-[9px] text-text-muted uppercase tracking-widest text-right md:text-left">LAST_UPDATED</span>
           </div>
 
           {/* Rows */}
@@ -99,38 +99,44 @@ export default function ActiveLogs() {
               key={s.shipment_id}
               onClick={() => navigate(`/shipments/${s.shipment_id}`)}
               className={`
-                grid grid-cols-[1fr_1.2fr_1.2fr_1fr_1fr] gap-4 px-6 py-5
+                grid grid-cols-[1fr_auto] md:grid-cols-[1fr_1.2fr_1.2fr_1fr_1fr] gap-4 px-4 md:px-6 py-4 md:py-5
                 text-left w-full transition-all group
                 hover:bg-status-warn/5 hover:border-l-4 hover:border-l-status-warn
                 ${i !== shipments.length - 1 ? 'border-b border-subtle' : ''}
               `}
             >
               {/* BOL Number */}
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1 min-w-0">
                 <span className="font-display text-xl text-text-primary tracking-tight group-hover:text-status-warn transition-colors">
                   {s.bol_number}
                 </span>
                 <span className="font-mono text-[9px] text-text-muted">
                   ID: {s.shipment_id.slice(0, 8)}
                 </span>
+                {/* Show destination inline on mobile */}
+                {s.destination && (
+                  <span className="md:hidden font-sans text-xs text-text-muted truncate" title={s.destination}>
+                    &rarr; {s.destination}
+                  </span>
+                )}
               </div>
 
-              {/* Origin */}
-              <div className="flex items-center">
+              {/* Origin — desktop only */}
+              <div className="hidden md:flex items-center">
                 <span className="font-sans text-sm text-text-primary truncate" title={s.origin}>
                   {s.origin}
                 </span>
               </div>
 
-              {/* Destination */}
-              <div className="flex items-center">
+              {/* Destination — desktop only */}
+              <div className="hidden md:flex items-center">
                 <span className="font-sans text-sm text-text-primary truncate" title={s.destination}>
                   {s.destination}
                 </span>
               </div>
 
-              {/* Last Event Type */}
-              <div className="flex items-center">
+              {/* Last Event Type — desktop only */}
+              <div className="hidden md:flex items-center">
                 {s.last_event_type ? (
                   <span className="font-mono text-[10px] border border-status-warn/40 text-status-warn px-2 py-0.5">
                     {s.last_event_type.toUpperCase().replace(' ', '_')}
@@ -141,11 +147,11 @@ export default function ActiveLogs() {
               </div>
 
               {/* Last Updated */}
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col items-end md:flex-row md:items-center md:justify-between gap-1">
                 <span className="font-mono text-[10px] text-text-muted">
                   {formatTimestamp(s.last_event_at)}
                 </span>
-                <span className="font-mono text-[9px] text-text-muted group-hover:text-status-warn transition-colors opacity-0 group-hover:opacity-100">
+                <span className="font-mono text-[9px] text-text-muted group-hover:text-status-warn transition-colors opacity-0 group-hover:opacity-100 hidden md:block">
                   &gt; VIEW
                 </span>
               </div>

@@ -124,7 +124,7 @@ export default function Settings() {
   const labelClass = "block font-mono text-[10px] text-accent-primary uppercase mb-2 tracking-widest";
 
   return (
-    <div className="p-8 flex flex-col gap-10 max-w-3xl">
+    <div className="p-4 md:p-8 flex flex-col gap-8 md:gap-10 max-w-3xl">
       <Toast
         isVisible={toast.isVisible}
         message={toast.message}
@@ -132,7 +132,7 @@ export default function Settings() {
       />
 
       <header className="border-b border-subtle pb-6">
-        <h1 className="font-display text-7xl text-accent-primary tracking-tighter leading-none uppercase">
+        <h1 className="font-display text-5xl md:text-7xl text-accent-primary tracking-tighter leading-none uppercase">
           SYS_SETTINGS
         </h1>
         <p className="font-mono text-xs text-text-muted mt-2 tracking-[0.2em]">

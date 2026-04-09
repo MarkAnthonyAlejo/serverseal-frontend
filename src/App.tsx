@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
@@ -14,10 +15,39 @@ import NotFound from './pages/NotFound';
 import './index.css';
 
 function AppShell({ children }: { children: React.ReactNode }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
     <div className="flex min-h-screen bg-base text-text-primary">
-      <Sidebar />
-      <main className="flex-1 overflow-y-auto">{children}</main>
+      {/* Backdrop — mobile only, closes sidebar on tap */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-30 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Mobile top bar */}
+        <header className="md:hidden sticky top-0 z-20 bg-surface border-b border-subtle flex items-center justify-between px-4 h-14 shrink-0">
+          <span className="text-accent-primary font-display text-2xl tracking-tighter leading-none">
+            SERVERSEAL_SYS
+          </span>
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="flex flex-col gap-[5px] p-2"
+            aria-label="Open navigation"
+          >
+            <span className="w-5 h-0.5 bg-text-primary block" />
+            <span className="w-5 h-0.5 bg-text-primary block" />
+            <span className="w-5 h-0.5 bg-text-primary block" />
+          </button>
+        </header>
+
+        <main className="flex-1 overflow-y-auto">{children}</main>
+      </div>
     </div>
   );
 }

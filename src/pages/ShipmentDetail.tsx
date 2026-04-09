@@ -135,7 +135,7 @@ export default function ShipmentDetail() {
   const { shipment, history, status_history } = data;
 
   return (
-    <div className="p-8 flex flex-col gap-10">
+    <div className="p-4 md:p-8 flex flex-col gap-8 md:gap-10">
       <Toast
         isVisible={toast.isVisible}
         message={toast.message}
@@ -151,18 +151,18 @@ export default function ShipmentDetail() {
       </button>
 
       {/* Shipment header */}
-      <header className="border-b border-subtle pb-8">
-        <div className="flex justify-between items-start mb-4">
+      <header className="border-b border-subtle pb-6 md:pb-8">
+        <div className="flex flex-col gap-4 md:flex-row md:justify-between md:items-start mb-4">
           <div>
             <p className="font-mono text-[10px] text-text-muted tracking-widest uppercase mb-2">
               MANIFEST // {shipment.shipment_id.slice(0, 8)}
             </p>
-            <h1 className="font-display text-7xl text-text-primary tracking-tighter leading-none uppercase">
+            <h1 className="font-display text-5xl md:text-7xl text-text-primary tracking-tighter leading-none uppercase">
               {shipment.bol_number}
             </h1>
           </div>
-          <div className="flex items-start gap-6 mt-2">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4 md:items-start md:gap-6 md:mt-2 flex-wrap">
+            <div className="flex items-center gap-3 flex-wrap">
               <span className={`font-mono text-xs border px-3 py-1 ${getStatusClasses(shipment.status)}`}>
                 {getStatusLabel(shipment.status)}
               </span>
@@ -177,7 +177,7 @@ export default function ShipmentDetail() {
             {qrDataUrl && (
               <div className="flex flex-col items-center gap-1">
                 <div className="border border-subtle p-1 bg-white">
-                  <img src={qrDataUrl} alt="Shipment QR Code" className="w-16 h-16 block" />
+                  <img src={qrDataUrl} alt="Shipment QR Code" className="w-14 h-14 md:w-16 md:h-16 block" />
                 </div>
                 <a
                   href={qrDataUrl}
@@ -265,14 +265,14 @@ export default function ShipmentDetail() {
 
       {/* Event timeline */}
       <section>
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="font-display text-4xl text-text-primary tracking-tight">
+        <div className="flex flex-col gap-4 md:flex-row md:justify-between md:items-center mb-6 md:mb-8">
+          <h2 className="font-display text-3xl md:text-4xl text-text-primary tracking-tight">
             CHAIN_OF_CUSTODY // EVENT_LOG
           </h2>
           {!isClient && (
             <button
               onClick={() => setIsDrawerOpen(true)}
-              className="btn-industrial text-base px-6 py-2"
+              className="btn-industrial text-base px-6 py-2 self-start md:self-auto"
             >
               LOG_NEW_EVENT
             </button>
