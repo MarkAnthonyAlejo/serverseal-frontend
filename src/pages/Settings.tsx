@@ -124,7 +124,7 @@ export default function Settings() {
   const labelClass = "block font-mono text-[10px] text-accent-primary uppercase mb-2 tracking-widest";
 
   return (
-    <div className="p-4 md:p-8 flex flex-col gap-8 md:gap-10 max-w-3xl">
+    <div className="p-4 md:p-8 flex flex-col gap-8 md:gap-10 max-w-3xl mx-auto w-full">
       <Toast
         isVisible={toast.isVisible}
         message={toast.message}
