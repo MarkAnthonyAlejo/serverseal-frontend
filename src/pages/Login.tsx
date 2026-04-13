@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -31,7 +32,8 @@ export default function Login() {
       }
 
       login(data.token, data.user);
-      navigate('/');
+      const next = searchParams.get('next') || '/';
+      navigate(next);
     } catch {
       setError('ERR_NETWORK_FAILURE // CHECK_CONNECTION');
     } finally {

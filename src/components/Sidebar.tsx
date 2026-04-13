@@ -27,7 +27,7 @@ export default function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose:
 
   return (
     <aside className={`
-      w-64 bg-surface border-r border-subtle flex flex-col h-screen
+      w-64 bg-surface border-r border-subtle flex flex-col h-dvh
       fixed inset-y-0 left-0 z-40 transition-transform duration-300
       md:sticky md:top-0 md:z-auto md:shrink-0 md:translate-x-0
       ${isOpen ? 'translate-x-0' : '-translate-x-full'}
@@ -66,7 +66,7 @@ export default function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose:
         })}
       </nav>
 
-      <div className="p-8 border-t border-subtle flex flex-col gap-4">
+      <div className="px-8 pt-8 border-t border-subtle flex flex-col gap-4" style={{ paddingBottom: 'calc(2rem + env(safe-area-inset-bottom, 0px))' }}>
         <button
           onClick={handleLogout}
           className="btn-industrial btn-industrial-danger w-full"
